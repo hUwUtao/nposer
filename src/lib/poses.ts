@@ -80,27 +80,69 @@ interface WalkingOptions {
 	ampLeg?: number;
 	ampArm?: number;
 	speed?: number;
-	phase?: number;
+	rng?: RNG;
+	armSwayMax?: number; // Max arm sway
+	legSwayMax?: number; // Max leg sway
 }
 
 export function walking(
 	t: number,
 	options: WalkingOptions = {},
 ): Partial<Pose> {
-	const { ampLeg = 40, ampArm = 45, speed = 1, phase = 0 } = options;
-	const w = 2 * Math.PI * speed;
-	const s = Math.sin(w * t + phase);
+	const {
+		ampLeg = 40,
+		ampArm = 45,
+		speed = 1,
+		rng = Math.random,
+		armSwayMax = 15,
+		legSwayMax = 5,
+	} = options;
 
-	const legL = ampLeg * s;
-	const legR = mirror(legL);
-	const armL = mirror(legL) * (ampArm / Math.max(1, ampLeg));
-	const armR = mirror(legR) * (ampArm / Math.max(1, ampLeg));
+	// Convert 10 degrees to radians for minimum phase
+	const MIN_PHASE = (10 * Math.PI) / 180; // 10 degrees in radians
+
+	// Generate a random initial phase for left leg with minimum range
+	const basePhase = rngBetween(rng, MIN_PHASE, Math.PI * 2 - MIN_PHASE);
+	const w = 2 * Math.PI * speed;
+
+	// Left leg is our primary constraint - everything else derives from this
+	const leftLegX = ampLeg * Math.sin(w * t + basePhase);
+	const leftLegY = legSwayMax * Math.sin(2 * w * t + basePhase); // Double frequency for natural sway
+
+	// Mirror the legs exactly
+	const rightLegX = mirror(leftLegX);
+	const rightLegY = mirror(leftLegY);
+
+	// Arms mirror their corresponding legs but with adjusted amplitude and phase offset
+	const armFactor = ampArm / Math.max(1, ampLeg);
+	const leftArmX = mirror(leftLegX) * armFactor;
+	const rightArmX = mirror(rightLegX) * armFactor;
+
+	// Arm sway follows leg motion but with their own amplitude
+	const leftArmZ = armSwayMax * Math.sin(2 * w * t + basePhase + Math.PI / 2);
+	const rightArmZ = mirror(leftArmZ);
 
 	return {
-		LeftLeg: { x: legL, y: 0, z: 0 },
-		RightLeg: { x: legR, y: 0, z: 0 },
-		LeftArm: { x: armL, y: 0, z: 0 },
-		RightArm: { x: armR, y: 0, z: 0 },
+		LeftLeg: {
+			x: leftLegX,
+			y: leftLegY,
+			z: 0,
+		},
+		RightLeg: {
+			x: rightLegX,
+			y: rightLegY,
+			z: 0,
+		},
+		LeftArm: {
+			x: leftArmX,
+			y: 0,
+			z: leftArmZ,
+		},
+		RightArm: {
+			x: rightArmX,
+			y: 0,
+			z: rightArmZ,
+		},
 	};
 }
 

@@ -35,6 +35,7 @@
 		"jsdom": "^27.0.1",
 		"typescript": "~5.9.3",
 		"typescript-eslint": "^8.46.1",
+		"unocss": "^66.5.4",
 		"vite": "^7.1.10"
 	}
 }

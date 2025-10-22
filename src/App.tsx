@@ -172,7 +172,9 @@ const DEFAULT_OUTFITS = await fetch(
 	new URL("./assets/outfits.txt", import.meta.url),
 ).then((res) => res.text());
 const OUTFITS = parseOutfitFile(DEFAULT_OUTFITS);
-console.log(DEFAULT_OUTFITS, OUTFITS);
+if (typeof window !== "undefined") {
+	console.log(DEFAULT_OUTFITS, OUTFITS);
+}
 
 // UI component
 export const ArmorStandPoseUI: FC = () => {
@@ -197,6 +199,7 @@ export const ArmorStandPoseUI: FC = () => {
 	const [clothingNBT, setClothingNBT] = useState("");
 	const [autoPick, setAutoPick] = useState(true); // Set auto-pick to true by default
 	const [autoSkull, setAutoSkull] = useState(true); // Set auto-skull to true by default
+	const [copyOnDone, setCopyOnDone] = useState(false);
 
 	// Initialize with an outfit when component mounts
 	useEffect(() => {
@@ -207,7 +210,13 @@ export const ArmorStandPoseUI: FC = () => {
 	const profile = useMemo(
 		() => ({
 			rng: mulberry32(seed),
-			walking: { ampLeg: 42, ampArm: 48, speed: 1 },
+			walking: {
+				ampLeg: 42,
+				ampArm: 48,
+				rng: mulberry32(seed),
+				armSwayMax: 15,
+				legSwayMax: 5,
+			},
 			sit: { swayY: 8 },
 		}),
 		[seed],
@@ -314,7 +323,16 @@ export const ArmorStandPoseUI: FC = () => {
 		return `/summon minecraft:armor_stand ~ ~ ~ {ShowArms:1b,NoBasePlate:1b,Rotation:[0.0f,0.0f],Pose:{Head:${pr(nbtPose.Head)},LeftArm:${pr(nbtPose.LeftArm)},RightArm:${pr(nbtPose.RightArm)},LeftLeg:${pr(nbtPose.LeftLeg)},RightLeg:${pr(nbtPose.RightLeg)}},equipment:${autoPick ? JSON.stringify(equipment) : "{}"}}`;
 	}, [nbtPose, clothingNBT, autoPick]);
 
-	function regen() {
+	// Copy to clipboard if copyOnDone is true
+	useEffect(() => {
+		if (copyOnDone && summon) {
+			navigator.clipboard.writeText(summon).catch(() => {});
+			setCopyOnDone(false); // Reset after copying
+		}
+	}, [copyOnDone, summon]);
+
+	function regen(andCopy = false) {
+		setCopyOnDone(andCopy); // Set whether to copy after generation
 		const newSeed = Math.floor(Math.random() * 2 ** 32) >>> 0;
 		setSeed(newSeed);
 		localStorage.setItem("armorstand_seed", newSeed.toString());
@@ -335,8 +353,11 @@ export const ArmorStandPoseUI: FC = () => {
 					flexWrap: "wrap",
 				}}
 			>
-				<button type="button" onClick={regen}>
+				<button type="button" onClick={() => regen(false)}>
 					Regen
+				</button>
+				<button type="button" onClick={() => regen(true)}>
+					Regen & Copy
 				</button>
 				<div>
 					seed:{" "}
@@ -425,7 +446,7 @@ export const ArmorStandPoseUI: FC = () => {
 						style={{ width: "100%", height: 120, fontFamily: "monospace" }}
 					/>
 					<div style={{ marginTop: 8 }}>Clothing NBT</div>
-					<pre style={{ fontFamily: "monospace", fontSize: 12 }}>
+					<pre style={{ fontFamily: "monospace", fontSize: 12,  textWrap: "pretty", width: "100%" }}>
 						{clothingNBT || "none"}
 					</pre>
 				</div>
