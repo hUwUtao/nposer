@@ -1,0 +1,18 @@
+---chestplate---
+sentry alldye iron ;cozy 1
+vex purple amethyst ;purple
+vex red quartz
+rib cyan diamond
+1 bolt black T:any ;match suit 1
+coast black iron
+wayfinder lime gold
+2 none white ; waitress
+
+---pants---
+1 raiser black T:any
+2 none black
+
+---boots---
+1 snout black T:any
+snout iron,white redstone,lapis,netherite ;white shoe with low pad
+snout netherite,black iron,quartz ;dark shoe with low pad
