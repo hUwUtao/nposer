@@ -1,172 +1,22 @@
-import { type FC, useMemo, useState, useEffect } from "react";
-import { mulberry32, rngPick } from "./lib/random";
-import { parseOutfitFile, type Entry } from "./lib/parser";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { pickOutfit } from "./lib/outfitter";
+import { parseOutfitFile } from "./lib/parser";
 import {
-	norm360,
+	addPose,
 	baseIdle,
-	walking,
+	holdDown,
+	holdUpright,
+	norm360,
+	overridePose,
+	point,
 	sit,
 	stareDown,
 	stareUp,
-	holdUpright,
-	holdDown,
+	walking,
 	wave,
-	point,
-	addPose,
-	overridePose,
 } from "./lib/poses";
-import type { RNG } from "./lib/types";
+import { mulberry32, rngPick } from "./lib/random";
 import { SKULLS } from "./lib/skull";
-
-import { MATERIAL_MAP, COLOR_MAP } from "./lib/constants";
-
-function detectToken(tok: string) {
-	const low = tok.toLowerCase().replace(/[^a-z0-9]/g, "");
-	if (MATERIAL_MAP[low]) return { mat: low } as any;
-	if (COLOR_MAP[low] !== undefined) return { color: low } as any;
-	return {} as any;
-}
-
-function itemIdFor(piece: "chest" | "legs" | "boots", mat?: string) {
-	const base = MATERIAL_MAP[mat || "iron"] || "iron";
-	const suffix =
-		piece === "chest" ? "chestplate" : piece === "legs" ? "leggings" : "boots";
-	if (base === "leather") return `minecraft:leather_${suffix}`;
-	if (base === "chainmail") return `minecraft:chainmail_${suffix}`;
-	return `minecraft:${base}_${suffix}`;
-}
-function armorNBT(
-	slot: "head" | "chest" | "legs" | "boots",
-	id: string,
-	count = 1,
-	components: Record<string, any> = {},
-) {
-	return {
-		[slot]: {
-			id,
-			count,
-			components,
-		},
-	};
-}
-
-// Trim patterns and materials
-const TRIM_PATTERNS = [
-	"minecraft:bolt",
-	"minecraft:rib",
-	"minecraft:coast",
-	"minecraft:wild",
-	"minecraft:ward",
-	"minecraft:vex",
-	"minecraft:snout",
-	"minecraft:eye",
-];
-const TRIM_MATERIALS = [
-	"minecraft:iron",
-	"minecraft:gold",
-	"minecraft:diamond",
-	"minecraft:netherite",
-	"minecraft:redstone",
-	"minecraft:copper",
-	"minecraft:emerald",
-	"minecraft:lapis",
-	"minecraft:amethyst",
-	"minecraft:quartz",
-];
-
-function _buildItem(
-	entry: Entry,
-	piece: "chest" | "legs" | "boots",
-	rng: RNG,
-	matchVars: Record<string, string>,
-) {
-	const rawOpt = entry.options.length ? rngPick(rng, entry.options) : "";
-	const tokens = rawOpt.split(/\s+/).filter(Boolean);
-	const resolved = tokens.map((tok) => {
-		if (tok.includes(",")) {
-			const choices = tok.split(",");
-			return rngPick(rng, choices).trim();
-		}
-		return tok;
-	});
-
-	let mat: string | null = null;
-	let color: string | null = null;
-	let trimPattern = null;
-	let trimMaterial = null;
-
-	// Parse tokens for material and color
-	for (const tok of resolved) {
-		if (/^[A-Za-z]:/.test(tok)) continue;
-		const d = detectToken(tok) as any;
-		if (!mat && d.mat) mat = d.mat;
-		if (!color && d.color) color = d.color;
-	}
-
-	// For items from the dataset table:
-	// Look for trim pattern in entry name/key
-	for (const pattern of TRIM_PATTERNS) {
-		const patternName = pattern.replace("minecraft:", "");
-		if (
-			entry.name.toLowerCase().includes(patternName) ||
-			entry.key.toLowerCase().includes(patternName)
-		) {
-			trimPattern = pattern;
-			break;
-		}
-	}
-
-	// Look for trim material in options
-	for (const material of TRIM_MATERIALS) {
-		const matName = material.replace("minecraft:", "");
-		if (resolved.some((tok) => tok.toLowerCase().includes(matName))) {
-			trimMaterial = material;
-			break;
-		}
-	}
-
-	// Process templates and variables
-	for (const varName of Object.keys(entry.templates)) {
-		const vals = entry.templates[varName];
-		const chosen = matchVars[entry.key];
-		if (chosen) {
-			if (!mat && MATERIAL_MAP[chosen]) mat = chosen;
-			if (!color && COLOR_MAP[chosen] !== undefined) color = chosen;
-		} else if (vals?.length) {
-			const pick = rngPick(rng, vals);
-			if (!mat && MATERIAL_MAP[pick]) mat = pick;
-			if (!color && COLOR_MAP[pick] !== undefined) color = pick;
-		}
-	}
-
-	const components: Record<string, any> = {};
-
-	// If this is a table entry and has trim specs, add trim
-	if (trimPattern && trimMaterial) {
-		components["minecraft:trim"] = {
-			material: trimMaterial,
-			pattern: trimPattern,
-		};
-	}
-
-	// Determine final material and color
-	const optStr = rawOpt.toLowerCase();
-	const isLeatherOrDye =
-		!mat && (optStr.includes("alldye") || optStr.includes("dye"));
-
-	if (isLeatherOrDye || mat === "leather" || !mat) {
-		// For leather items (either explicit or default), MUST have color
-		mat = "leather";
-		const finalColor = color
-			? COLOR_MAP[color]
-			: COLOR_MAP[rngPick(rng, Object.keys(COLOR_MAP))];
-		components["minecraft:dyed_color"] = finalColor;
-	}
-
-	const id = itemIdFor(piece, mat);
-	return armorNBT(piece, id, 1, components);
-}
 
 const DEFAULT_OUTFITS = await fetch(
 	new URL("./assets/outfits.txt", import.meta.url),
@@ -320,7 +170,7 @@ export const ArmorStandPoseUI: FC = () => {
 		if (clothingNBT?.startsWith("equipment:")) {
 			equipment = JSON.parse(clothingNBT.replace(/^equipment:/, ""));
 		}
-		return `/summon minecraft:armor_stand ~ ~ ~ {ShowArms:1b,NoBasePlate:1b,Rotation:[0.0f,0.0f],Pose:{Head:${pr(nbtPose.Head)},LeftArm:${pr(nbtPose.LeftArm)},RightArm:${pr(nbtPose.RightArm)},LeftLeg:${pr(nbtPose.LeftLeg)},RightLeg:${pr(nbtPose.RightLeg)}},equipment:${autoPick ? JSON.stringify(equipment) : "{}"}}`;
+		return `/minecraft:summon minecraft:armor_stand ~ ~ ~ {ShowArms:1b,NoBasePlate:1b,Rotation:[0.0f,0.0f],Pose:{Head:${pr(nbtPose.Head)},LeftArm:${pr(nbtPose.LeftArm)},RightArm:${pr(nbtPose.RightArm)},LeftLeg:${pr(nbtPose.LeftLeg)},RightLeg:${pr(nbtPose.RightLeg)}},equipment:${autoPick ? JSON.stringify(equipment) : "{}"}}`;
 	}, [nbtPose, clothingNBT, autoPick]);
 
 	// Copy to clipboard if copyOnDone is true
@@ -344,31 +194,20 @@ export const ArmorStandPoseUI: FC = () => {
 	}
 
 	return (
-		<div style={{ padding: 20, maxWidth: 1100, background: "#fff" }}>
-			<div
-				style={{
-					display: "flex",
-					gap: 12,
-					alignItems: "center",
-					flexWrap: "wrap",
-				}}
-			>
-				<button type="button" onClick={() => regen(false)}>
-					Regen
-				</button>
-				<button type="button" onClick={() => regen(true)}>
-					Regen & Copy
-				</button>
-				<div>
-					seed:{" "}
+		<div className="p-5 max-w-7xl mx-auto bg-white rounded-lg">
+			<div className="flex flex-wrap gap-3 items-center mb-4">
+				<div className="flex items-center gap-2">
+					<span className="text-gray-700">Seed:</span>
 					<input
 						type="number"
 						onChange={(e) => setSeed(parseInt(e.target.value, 10))}
 						value={seed}
+						className="px-3 py-1 border rounded w-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
 					/>
 				</div>
-				<label>
-					t (action intensity){" "}
+
+				<label className="flex items-center gap-2">
+					<span className="text-gray-700">Intensity:</span>
 					<input
 						type="range"
 						min={0}
@@ -376,35 +215,46 @@ export const ArmorStandPoseUI: FC = () => {
 						step={0.01}
 						value={t}
 						onChange={(e) => setT(Number(e.target.value))}
+						className="w-32"
 					/>
 				</label>
-				<label>
-					<input
-						type="checkbox"
-						checked={autoPick}
-						onChange={(e) => setAutoPick(e.target.checked)}
-					/>{" "}
-					auto-pick outfit on regen
-				</label>
-				<label>
-					<input
-						type="checkbox"
-						checked={autoSkull}
-						onChange={(e) => setAutoSkull(e.target.checked)}
-					/>{" "}
-					random skull
-				</label>
+
+				<div className="flex gap-4">
+					<label className="flex items-center gap-2 cursor-pointer">
+						<input
+							type="checkbox"
+							checked={autoPick}
+							onChange={(e) => setAutoPick(e.target.checked)}
+							className="w-4 h-4 rounded text-blue-500 focus:ring-2 focus:ring-blue-500"
+						/>
+						<span className="text-gray-700">Auto-outfit</span>
+					</label>
+
+					<label className="flex items-center gap-2 cursor-pointer">
+						<input
+							type="checkbox"
+							checked={autoSkull}
+							onChange={(e) => setAutoSkull(e.target.checked)}
+							className="w-4 h-4 rounded text-blue-500 focus:ring-2 focus:ring-blue-500"
+						/>
+						<span className="text-gray-700">Random skull</span>
+					</label>
+				</div>
+
 				<select
 					value={action}
 					onChange={(e) => setAction(e.target.value as any)}
+					className="px-3 py-2 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
 				>
 					<option value="walking">walking</option>
 					<option value="sit">sit</option>
 					<option value="none">none</option>
 				</select>
+
 				<select
 					value={overrideSel}
 					onChange={(e) => setOverrideSel(e.target.value as any)}
+					className="px-3 py-2 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
 				>
 					<option value="none">none</option>
 					<option value="stare-down">stare-down</option>
@@ -414,41 +264,62 @@ export const ArmorStandPoseUI: FC = () => {
 					<option value="wave">wave</option>
 					<option value="point">point</option>
 				</select>
-				{/* <button onClick={() => pick()}>Pick Outfit</button> */}
-				<button type="button" onClick={copy}>
-					Copy
-				</button>
+
+				<div className="flex gap-2">
+					<button
+						type="button"
+						onClick={() => regen(false)}
+						className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
+					>
+						Regen
+					</button>
+					<button
+						type="button"
+						onClick={() => regen(true)}
+						className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200"
+					>
+						Regen & Copy
+					</button>
+					<button
+						type="button"
+						onClick={copy}
+						className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition duration-200"
+					>
+						Copy
+					</button>
+				</div>
 			</div>
 
-			<div
-				style={{
-					display: "grid",
-					gridTemplateColumns: "1fr 1fr",
-					gap: 12,
-					marginTop: 12,
-				}}
-			>
-				<div>
-					<div style={{ marginBottom: 8 }}>Signed pose</div>
-					<pre style={{ fontFamily: "monospace", fontSize: 12 }}>
-						{JSON.stringify(signedPose, null, 2)}
-					</pre>
-					<div style={{ marginTop: 8 }}>NBT pose</div>
-					<pre style={{ fontFamily: "monospace", fontSize: 12 }}>
-						{JSON.stringify(nbtPose, null, 2)}
-					</pre>
+			<div className="grid grid-cols-2 gap-4">
+				<div className="space-y-4">
+					<div>
+						<div className="text-gray-700 font-medium mb-2">Signed pose</div>
+						<pre className="font-mono text-xs bg-gray-50 p-4 rounded shadow-inner overflow-auto max-h-64">
+							{JSON.stringify(signedPose, null, 2)}
+						</pre>
+					</div>
+					<div>
+						<div className="text-gray-700 font-medium mb-2">NBT pose</div>
+						<pre className="font-mono text-xs bg-gray-50 p-4 rounded shadow-inner overflow-auto max-h-64">
+							{JSON.stringify(nbtPose, null, 2)}
+						</pre>
+					</div>
 				</div>
-				<div>
-					<div style={{ marginBottom: 8 }}>Command</div>
-					<textarea
-						readOnly
-						value={summon}
-						style={{ width: "100%", height: 120, fontFamily: "monospace" }}
-					/>
-					<div style={{ marginTop: 8 }}>Clothing NBT</div>
-					<pre style={{ fontFamily: "monospace", fontSize: 12,  textWrap: "pretty", width: "100%" }}>
-						{clothingNBT || "none"}
-					</pre>
+				<div className="space-y-4">
+					<div>
+						<div className="text-gray-700 font-medium mb-2">Command</div>
+						<textarea
+							readOnly
+							value={summon}
+							className="w-full h-32 font-mono text-sm p-4 bg-gray-50 rounded border focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+						/>
+					</div>
+					<div>
+						<div className="text-gray-700 font-medium mb-2">Clothing NBT</div>
+						<pre className="font-mono text-xs bg-gray-50 p-4 rounded shadow-inner overflow-auto max-h-64 break-words">
+							{clothingNBT || "none"}
+						</pre>
+					</div>
 				</div>
 			</div>
 		</div>

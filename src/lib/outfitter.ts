@@ -1,12 +1,12 @@
-import type { Entry, RNG, ArmorComponent, OutfitResult } from "./types";
 import {
-	MATERIAL_MAP,
 	COLOR_MAP,
-	TRIM_PATTERNS,
+	MATERIAL_MAP,
 	TRIM_MATERIALS,
+	TRIM_PATTERNS,
 } from "./constants";
-import { rngPick } from "./random";
 import { detectToken } from "./parser";
+import { rngPick } from "./random";
+import type { ArmorComponent, Entry, OutfitResult, RNG } from "./types";
 
 function itemIdFor(
 	piece: "head" | "chest" | "legs" | "feet",

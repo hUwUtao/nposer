@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { parseOutfitFile } from "../lib/parser";
+import { describe, expect, it } from "vitest";
 import { pickOutfit } from "../lib/outfitter";
+import { parseOutfitFile } from "../lib/parser";
 import { mulberry32 } from "../lib/random";
 
 const TEST_DATASET = await (await import("../assets/outfits.txt")).default;

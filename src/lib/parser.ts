@@ -1,4 +1,4 @@
-import { MATERIAL_MAP, COLOR_MAP } from "./constants";
+import { COLOR_MAP, MATERIAL_MAP } from "./constants";
 import type { Entry, Sections } from "./types";
 
 export type { Entry };

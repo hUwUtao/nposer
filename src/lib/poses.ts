@@ -1,5 +1,5 @@
-import type { RNG, Pose } from "./types";
 import { rngBetween } from "./random";
+import type { Pose, RNG } from "./types";
 
 export const norm360 = (d: number) => ((d % 360) + 360) % 360;
 export const mirror = (d: number) => -d;
