@@ -2,7 +2,6 @@
 sentry alldye iron ;cozy 1
 vex purple amethyst ;purple
 vex red quartz
-rib cyan diamond
 1 bolt black T:any ;match suit 1
 coast black iron
 wayfinder lime gold

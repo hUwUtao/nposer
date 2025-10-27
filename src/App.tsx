@@ -96,7 +96,13 @@ export const ArmorStandPoseUI: FC = () => {
 			};
 		}
 
-		setClothingNBT(`equipment:${JSON.stringify(o.equipment, null, 2)}`);
+		setClothingNBT(
+			`equipment:${JSON.stringify(
+				o.equipment,
+				null,
+				2,
+			)}`,
+		);
 	}
 
 	const signedPose = useMemo(() => {

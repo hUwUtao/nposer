@@ -181,17 +181,22 @@ export function pickOutfit(
 	sections: Record<string, Entry[]>,
 	rng: RNG,
 ): OutfitResult {
-	// Chest: From table or dyed leather
-	// Step 1: Pick a chestplate first
-	const chestEntry = sections.chestplate?.length
+	// 80% chance for table entries, 20% for random leather
+	const useTable = rng() < 0.8;
+	
+	// Step 1: Pick a chestplate first (with chance)
+	const chestEntry = useTable && sections.chestplate?.length
 		? rngPick(rng, sections.chestplate)
 		: null;
 
+	// Step 2: Determine if we use table for pants (separate 80/20 roll)
+	const useTablePants = rng() < 0.2;
 	let pantsEntry = null;
 	let bootsEntry = null;
 
-	// Step 2: If chest has a match key, try to find matching pieces
-	const matchKey = chestEntry ? getMatchKey(chestEntry) : undefined;
+	// Step 3: If chest has a match key, try to find matching pieces
+	// Only apply if we're using table entries
+	const matchKey = useTable && chestEntry ? getMatchKey(chestEntry) : undefined;
 
 	if (matchKey !== undefined) {
 		// Find all pieces that share this match key
@@ -208,12 +213,12 @@ export function pickOutfit(
 		}
 	}
 
-	// Fill in any missing pieces
-	if (!pantsEntry && sections.pants?.length) {
+	// Fill in pants - respect the table chance unless we have a match
+	if (!pantsEntry && useTablePants && sections.pants?.length) {
 		pantsEntry = rngPick(rng, sections.pants);
 	}
 
-	// Always try to get boots if available
+	// Always try to get boots from table if available
 	if (!bootsEntry && sections.boots?.length) {
 		bootsEntry = rngPick(rng, sections.boots);
 	}
@@ -234,10 +239,13 @@ export function pickOutfit(
 
 	// Log the table contents and generation result
 	if (typeof window !== "undefined") {
+		console.log("\nGeneration Settings:");
+		console.log("Using Table (Chest):", useTable);
+		console.log("Using Table (Pants):", useTablePants);
 		console.log("\nClothing Table:", sections);
 		console.log("\nSelected Entries:");
-		console.log("Chest:", chestEntry);
-		console.log("Pants:", pantsEntry);
+		console.log("Chest:", chestEntry || "Random Leather");
+		console.log("Pants:", pantsEntry || "Random Leather");
 		console.log("Boots:", bootsEntry);
 		console.log("\nGenerated Equipment:");
 		console.log(JSON.stringify(equipment, null, 2));
