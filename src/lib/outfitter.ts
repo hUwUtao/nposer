@@ -13,8 +13,6 @@ import DEFAULT_PALETTE from "../assets/palette.txt?raw";
 const COLORS =
 	DEFAULT_PALETTE.match(/.{6}/g)?.map((hex) => parseInt(hex, 16)) || [];
 
-console.error(COLORS);
-
 function itemIdFor(
 	piece: "head" | "chest" | "legs" | "feet",
 	material: string,
