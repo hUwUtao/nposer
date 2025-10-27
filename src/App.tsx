@@ -80,10 +80,10 @@ export const ArmorStandPoseUI: FC = () => {
 		if (autoSkull && SKULLS.length > 0) {
 			const skullTexture = rngPick(rng, SKULLS);
 			o.equipment.head = {
-				id: "minecraft:player_head",
+				id: "player_head",
 				count: 1,
 				components: {
-					"minecraft:profile": {
+					profile: {
 						properties: [
 							{
 								name: "textures",
@@ -180,7 +180,7 @@ export const ArmorStandPoseUI: FC = () => {
 		if (clothingNBT?.startsWith("equipment:")) {
 			equipment = JSON.parse(clothingNBT.replace(/^equipment:/, ""));
 		}
-		return `/minecraft:summon minecraft:armor_stand ~ ~ ~ {ShowArms:1b,NoBasePlate:1b,Rotation:[0.0f,0.0f],Pose:{Head:${pr(nbtPose.Head)},LeftArm:${pr(nbtPose.LeftArm)},RightArm:${pr(nbtPose.RightArm)},LeftLeg:${pr(nbtPose.LeftLeg)},RightLeg:${pr(nbtPose.RightLeg)}},equipment:${autoPick ? JSON.stringify(equipment) : "{}"}}`;
+		return `/summon armor_stand ~ ~ ~ {ShowArms:1b,NoBasePlate:1b,Rotation:[0.0f,0.0f],Pose:{Head:${pr(nbtPose.Head)},LeftArm:${pr(nbtPose.LeftArm)},RightArm:${pr(nbtPose.RightArm)},LeftLeg:${pr(nbtPose.LeftLeg)},RightLeg:${pr(nbtPose.RightLeg)}},equipment:${autoPick ? JSON.stringify(equipment).replace(/["=]/g, "") : "{}"}}`;
 	}, [nbtPose, clothingNBT, autoPick]);
 
 	// Copy to clipboard if copyOnDone is true

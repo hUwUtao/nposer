@@ -45,10 +45,8 @@ describe("Outfit Parser", () => {
 
 		Object.values(result.equipment).forEach((piece) => {
 			if (piece?.id.includes("leather")) {
-				expect(piece.components).toHaveProperty("minecraft:dyed_color");
-				expect(typeof piece.components?.["minecraft:dyed_color"]).toBe(
-					"number",
-				);
+				expect(piece.components).toHaveProperty("dyed_color");
+				expect(typeof piece.components?.["dyed_color"]).toBe("number");
 			}
 		});
 	});
@@ -59,7 +57,7 @@ describe("Outfit Parser", () => {
 
 		const result = pickOutfit(sections, rng);
 
-		if (result.equipment.legs && result.equipment.legs.id !== "minecraft:air") {
+		if (result.equipment.legs && result.equipment.legs.id !== "air") {
 			const isFromTable = sections.boots.some((entry) => {
 				const resolved = entry.options[0].split(/\s+/).some((token) => {
 					return result.equipment.legs?.id.includes(token.toLowerCase());
@@ -79,7 +77,7 @@ describe("Outfit Parser", () => {
 
 		// If pieces share a key, their template variables should match
 		const pieces = Object.values(result.equipment).filter(
-			(p) => p && p.id !== "minecraft:air",
+			(p) => p && p.id !== "air",
 		);
 		const matchVars = result.matchVars;
 
@@ -89,10 +87,10 @@ describe("Outfit Parser", () => {
 				p?.id.includes(key.toLowerCase()),
 			);
 			piecesWithKey.forEach((piece) => {
-				if (piece?.components?.["minecraft:trim"]) {
-					expect(
-						piece?.components["minecraft:trim"].pattern.toLowerCase(),
-					).toContain(key.toLowerCase());
+				if (piece?.components?.["trim"]) {
+					expect(piece?.components["trim"].pattern.toLowerCase()).toContain(
+						key.toLowerCase(),
+					);
 				}
 			});
 		}

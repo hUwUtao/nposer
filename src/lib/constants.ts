@@ -3,7 +3,7 @@ export const MATERIAL_MAP: Record<string, string> = {
 	netherite: "netherite",
 	diamond: "diamond",
 	iron: "iron",
-	gold: "gold", // Changed from 'golden' to match actual item IDs
+	gold: "golden", // Changed from 'golden' to match actual item IDs
 	leather: "leather",
 	chain: "chainmail",
 };
@@ -18,27 +18,27 @@ export const COLOR_MAP: Record<string, number> = {
 } as const;
 
 export const TRIM_PATTERNS = [
-	"minecraft:bolt",
-	"minecraft:rib",
-	"minecraft:coast",
-	"minecraft:wild",
-	"minecraft:ward",
-	"minecraft:vex",
-	"minecraft:snout",
-	"minecraft:eye",
+	"bolt",
+	"rib",
+	"coast",
+	"wild",
+	"ward",
+	"vex",
+	"snout",
+	"eye",
 ];
 
 export const TRIM_MATERIALS = [
-	"minecraft:iron",
-	"minecraft:gold",
-	"minecraft:diamond",
-	"minecraft:netherite",
-	"minecraft:redstone",
-	"minecraft:copper",
-	"minecraft:emerald",
-	"minecraft:lapis",
-	"minecraft:amethyst",
-	"minecraft:quartz",
+	"iron",
+	"gold",
+	"diamond",
+	"netherite",
+	"redstone",
+	"copper",
+	"emerald",
+	"lapis",
+	"amethyst",
+	"quartz",
 ];
 
 export const DEFAULT_MATERIALS = [

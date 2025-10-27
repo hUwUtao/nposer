@@ -28,7 +28,7 @@ function itemIdFor(
 					: "boots";
 
 	// Always get a valid material, defaulting to iron if not found
-	return `minecraft:${base || "iron"}_${suffix}`;
+	return `${base || "iron"}_${suffix}`;
 }
 
 function getMatchKey(entry: Entry): number | undefined {
@@ -67,7 +67,7 @@ function buildArmorPiece(
 			id: itemIdFor(piece, "leather"),
 			count: 1,
 			components: {
-				"minecraft:dyed_color": COLOR_MAP[randomColor],
+				dyed_color: COLOR_MAP[randomColor],
 			},
 		};
 	}
@@ -97,7 +97,7 @@ function buildArmorPiece(
 		// Check if token is a trim pattern
 		const tokenLower = token.toLowerCase();
 		for (const pattern of TRIM_PATTERNS) {
-			const patternName = pattern.replace("minecraft:", "");
+			const patternName = pattern.replace("", "");
 			if (tokenLower === patternName) {
 				trimPattern = pattern;
 				break;
@@ -108,7 +108,7 @@ function buildArmorPiece(
 	// If no trim pattern found in tokens, look in entry name/key
 	if (!trimPattern) {
 		for (const pattern of TRIM_PATTERNS) {
-			const patternName = pattern.replace("minecraft:", "");
+			const patternName = pattern.replace("", "");
 			if (
 				entry.name.toLowerCase().includes(patternName) ||
 				entry.key.toLowerCase().includes(patternName)
@@ -123,7 +123,7 @@ function buildArmorPiece(
 	for (const token of resolved) {
 		const normalizedToken = token.toLowerCase();
 		for (const material of TRIM_MATERIALS) {
-			if (normalizedToken.includes(material.replace("minecraft:", ""))) {
+			if (normalizedToken.includes(material.replace("", ""))) {
 				trimMaterial = material;
 				break;
 			}
@@ -165,12 +165,12 @@ function buildArmorPiece(
 			];
 			finalColor = rngPick(rng, validColors);
 		}
-		components["minecraft:dyed_color"] = finalColor;
+		components["dyed_color"] = finalColor;
 	}
 
 	// Add trim if specified
 	if (trimPattern && trimMaterial) {
-		components["minecraft:trim"] = {
+		components["trim"] = {
 			pattern: trimPattern,
 			material: trimMaterial,
 		};
@@ -236,12 +236,12 @@ export function pickOutfit(
 
 	// Build equipment ensuring valid colors for leather
 	const equipment = {
-		head: { id: "minecraft:air", count: 0 },
+		head: { id: "air", count: 0 },
 		chest: buildArmorPiece(chestEntry, "chest", rng, matchVars),
 		legs: buildArmorPiece(pantsEntry, "legs", rng, matchVars),
 		feet: sections.boots?.length
 			? buildArmorPiece(bootsEntry, "feet", rng, matchVars)
-			: { id: "minecraft:air", count: 0 },
+			: { id: "air", count: 0 },
 	};
 
 	// Log the table contents and generation result

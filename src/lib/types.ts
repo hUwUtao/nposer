@@ -25,12 +25,12 @@ export type ArmorComponent = {
 	id: string;
 	count: number;
 	components?: {
-		"minecraft:dyed_color"?: number;
-		"minecraft:trim"?: {
+		dyed_color?: number;
+		trim?: {
 			material: string;
 			pattern: string;
 		};
-		"minecraft:profile"?: any;
+		profile?: any;
 	};
 };
 
