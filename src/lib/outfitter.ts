@@ -8,6 +8,13 @@ import { detectToken } from "./parser";
 import { rngPick } from "./random";
 import type { ArmorComponent, Entry, OutfitResult, RNG } from "./types";
 
+import DEFAULT_PALETTE from "../assets/palette.txt?raw";
+
+const COLORS =
+	DEFAULT_PALETTE.match(/.{6}/g)?.map((hex) => parseInt(hex, 16)) || [];
+
+console.error(COLORS);
+
 function itemIdFor(
 	piece: "head" | "chest" | "legs" | "feet",
 	material: string,
@@ -149,17 +156,18 @@ function buildArmorPiece(
 
 	// If it's leather, ensure color
 	if (material === "leather") {
-		let finalColor: string;
+		let finalColor: number;
 		if (color && COLOR_MAP[color] !== undefined) {
-			finalColor = color;
+			finalColor = COLOR_MAP[color] !== undefined ? COLOR_MAP[color] : 0xff00ff;
 		} else {
 			// Pick a random color, but ensure it's not undefined
-			const validColors = Object.entries(COLOR_MAP)
-				.filter(([_, val]) => val !== undefined)
-				.map(([key, _]) => key);
+			const validColors = [
+				...Object.entries(COLOR_MAP).map(([_, val]) => val),
+				...COLORS,
+			];
 			finalColor = rngPick(rng, validColors);
 		}
-		components["minecraft:dyed_color"] = COLOR_MAP[finalColor];
+		components["minecraft:dyed_color"] = finalColor;
 	}
 
 	// Add trim if specified
@@ -183,11 +191,12 @@ export function pickOutfit(
 ): OutfitResult {
 	// 80% chance for table entries, 20% for random leather
 	const useTable = rng() < 0.8;
-	
+
 	// Step 1: Pick a chestplate first (with chance)
-	const chestEntry = useTable && sections.chestplate?.length
-		? rngPick(rng, sections.chestplate)
-		: null;
+	const chestEntry =
+		useTable && sections.chestplate?.length
+			? rngPick(rng, sections.chestplate)
+			: null;
 
 	// Step 2: Determine if we use table for pants (separate 80/20 roll)
 	const useTablePants = rng() < 0.2;

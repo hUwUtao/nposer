@@ -18,9 +18,8 @@ import {
 import { mulberry32, rngPick } from "./lib/random";
 import { SKULLS } from "./lib/skull";
 
-const DEFAULT_OUTFITS = await fetch(
-	new URL("./assets/outfits.txt", import.meta.url),
-).then((res) => res.text());
+import DEFAULT_OUTFITS from "./assets/outfits.txt?raw";
+
 const OUTFITS = parseOutfitFile(DEFAULT_OUTFITS);
 if (typeof window !== "undefined") {
 	console.log(DEFAULT_OUTFITS, OUTFITS);
@@ -98,7 +97,12 @@ export const ArmorStandPoseUI: FC = () => {
 
 		setClothingNBT(
 			`equipment:${JSON.stringify(
-				o.equipment,
+				{
+					chest: o.equipment.chest,
+					legs: o.equipment.legs,
+					feet: o.equipment.feet,
+					head: o.equipment.head,
+				},
 				null,
 				2,
 			)}`,

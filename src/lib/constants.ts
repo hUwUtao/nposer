@@ -15,7 +15,7 @@ export const COLOR_MAP: Record<string, number> = {
 	cyan: 0x00ffff,
 	purple: 0x800080,
 	lime: 0x00ff00,
-};
+} as const;
 
 export const TRIM_PATTERNS = [
 	"minecraft:bolt",

@@ -1,6 +1,5 @@
-const SKULLFILE = await fetch(
-	new URL("../assets/skulls.txt", import.meta.url),
-).then((res) => res.text());
+import SKULLFILE from "../assets/skulls.txt?raw";
+
 export const SKULLS = SKULLFILE.split(/\r?\n/)
 	.map((line) => line.trim())
 	.filter(Boolean)
